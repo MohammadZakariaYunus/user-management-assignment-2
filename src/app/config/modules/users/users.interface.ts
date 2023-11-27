@@ -1,10 +1,8 @@
-// import { Schema, model, connect } from 'mongoose'
-
-export type UsersFullName = {
+export type FullName = {
   firstName: string
   lastName: string
 }
-export type UsersAddress = {
+export type Address = {
   street: string
   city: string
   country: string
@@ -16,15 +14,15 @@ export type Order = {
   quantity: string
 }
 
-export type Users = {
+export type User = {
   userId: string
   username: string
   password: string
-  fullName: UsersFullName
+  fullName: FullName
   age: string
   email: string
   isActive: boolean
   hobbies: string[]
-  address: UsersAddress
+  address: Address
   orders: Order[]
 }
