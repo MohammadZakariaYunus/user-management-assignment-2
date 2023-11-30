@@ -6,6 +6,8 @@ import {
   TUser,
   UserModel,
 } from './users/users.interface'
+import bcrypt from 'bcrypt'
+import config from '../../config'
 
 const fullNameSchema = new Schema<TFullName>({
   firstName: {
@@ -65,6 +67,19 @@ const userSchema = new Schema<TUser, UserModel>({
   hobbies: [String],
   address: addressSchema,
   orders: [orderSchema],
+})
+
+userSchema.pre('save', async function (next) {
+  const user = this
+  user.password = await bcrypt.hash(
+    user.password,
+    Number(config.bcrypt_salt_rounds),
+  )
+  next()
+})
+userSchema.post('save', async function (doc, next) {
+  doc.password = ''
+  next()
 })
 
 userSchema.statics.isUserExists = async function (id: string) {
