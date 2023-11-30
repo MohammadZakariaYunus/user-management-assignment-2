@@ -8,6 +8,7 @@ import {
 } from './users/users.interface'
 import bcrypt from 'bcrypt'
 import config from '../../config'
+import { boolean } from 'joi'
 
 const fullNameSchema = new Schema<TFullName>({
   firstName: {
@@ -67,6 +68,10 @@ const userSchema = new Schema<TUser, UserModel>({
   hobbies: [String],
   address: addressSchema,
   orders: [orderSchema],
+  isDeleted: {
+    type: Boolean,
+    default: false,
+  },
 })
 
 userSchema.pre('save', async function (next) {

@@ -8,6 +8,6 @@ router.get('/', userControllers.getAllUsers)
 
 router.get('/:userId', userControllers.getUserById)
 
-// router.get('/:studentId', StudentControllers.getSingleStudent)
+router.delete('/:userId', userControllers.deleteUserFromDB)
 
 export const UsersRoutes = router
