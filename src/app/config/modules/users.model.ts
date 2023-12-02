@@ -8,7 +8,6 @@ import {
 } from './users/users.interface'
 import bcrypt from 'bcrypt'
 import config from '../../config'
-import { boolean } from 'joi'
 
 const fullNameSchema = new Schema<TFullName>({
   firstName: {
