@@ -15,9 +15,22 @@ const getAllUsersFromDB = async () => {
 }
 
 const getUserByIdFromDB = async (userId: string) => {
-  const result = await User.findOne({ userId })
+  const result = await User.aggregate([{ $match: { userId: userId } }])
   return result
 }
+
+const updateUserFromDB = async (
+  userId: string,
+  userData: TUser,
+): Promise<TUser | null> => {
+  const result = await User.findOneAndUpdate({ userId }, userData, {
+    new: true,
+    runValidators: true,
+  })
+
+  return result
+}
+
 const deleteUserFromDB = async (userId: string) => {
   const result = await User.updateOne({ userId }, { isDeleted: true })
   return result
@@ -27,5 +40,6 @@ export const UserServices = {
   createUserIntoDB,
   getAllUsersFromDB,
   getUserByIdFromDB,
+  updateUserFromDB,
   deleteUserFromDB,
 }

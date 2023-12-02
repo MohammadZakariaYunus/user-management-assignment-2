@@ -2,27 +2,6 @@ import { Request, Response } from 'express'
 import { UserServices } from './users.service'
 import userValidationSchema from '../users.validation'
 
-// const createUser = async (req: Request, res: Response) => {
-//   try {
-//     const { users: usersData } = req.body
-
-//     const { error, value } = userValidationSchema.validate(usersData)
-//     const result = await UserServices.createUserIntoDB(value)
-
-//     res.status(200).json({
-//       success: true,
-//       message: 'New User is created successfully',
-//       data: result,
-//     })
-//   } catch (err: any) {
-//     res.status(500).json({
-//       success: false,
-//       message: err.message || 'something went wrong',
-//       error: err,
-//     })
-//   }
-// }
-
 const createUser = async (req: Request, res: Response) => {
   try {
     const { users: usersData } = req.body
@@ -40,9 +19,9 @@ const createUser = async (req: Request, res: Response) => {
     const userObject: any = result.toObject()
     delete userObject.password
 
-    res.status(200).json({
+    res.status(201).json({
       success: true,
-      message: 'New User is created successfully',
+      message: 'User created successfully!',
       data: userObject,
     })
   } catch (err: any) {
@@ -57,12 +36,20 @@ const createUser = async (req: Request, res: Response) => {
 const getAllUsers = async (req: Request, res: Response) => {
   try {
     const result = await UserServices.getAllUsersFromDB()
+
     const filteredResult = result.map(user => ({
       username: user.username,
-      fullName: user.fullName,
+      fullName: {
+        firstName: user.fullName.firstName,
+        lastName: user.fullName.lastName,
+      },
       age: user.age,
       email: user.email,
-      address: user.address,
+      address: {
+        street: user.address.street,
+        city: user.address.city,
+        country: user.address.country,
+      },
     }))
 
     res.status(200).json({
@@ -81,11 +68,11 @@ const getAllUsers = async (req: Request, res: Response) => {
     })
   }
 }
-const deleteUserFromDB = async (req: Request, res: Response) => {
+
+const getUserById = async (req: Request, res: Response) => {
   try {
     const { userId } = req.params
-    const result = await UserServices.deleteUserFromDB(userId)
-
+    const result = await UserServices.getUserByIdFromDB(userId)
     res.status(200).json({
       success: true,
       message: 'User is retrieved successfully',
@@ -102,15 +89,57 @@ const deleteUserFromDB = async (req: Request, res: Response) => {
     })
   }
 }
-const getUserById = async (req: Request, res: Response) => {
+
+const updateUserById = async (req: Request, res: Response) => {
   try {
     const { userId } = req.params
-    const result = await UserServices.getUserByIdFromDB(userId)
+    const userData = req.body
+    const result = await UserServices.updateUserFromDB(userId, userData)
 
+    if (result) {
+      const updatedUserData = {
+        username: result.username,
+        fullName: {
+          firstName: result.fullName.firstName,
+          lastName: result.fullName.lastName,
+        },
+        age: result.age,
+        email: result.email,
+        address: {
+          street: result.address.street,
+          city: result.address.city,
+          country: result.address.country,
+        },
+      }
+
+      res.status(200).json({
+        status: 'success',
+        message: 'User updated successfully',
+        data: updatedUserData,
+      })
+    } else {
+      res.status(404).json({
+        status: 'fail',
+        message: 'User not found',
+      })
+    }
+  } catch (error: any) {
+    console.log(error)
+    res.status(500).json({
+      status: 'fail',
+      message: error.message || 'Something went wrong',
+    })
+  }
+}
+
+const deleteUserFromDB = async (req: Request, res: Response) => {
+  try {
+    const { userId } = req.params
+    const result = await UserServices.deleteUserFromDB(userId)
     res.status(200).json({
       success: true,
       message: 'User deleted successfully!',
-      data: null,
+      data: result,
     })
   } catch (err) {
     res.status(404).json({
@@ -128,5 +157,6 @@ export const userControllers = {
   createUser,
   getAllUsers,
   getUserById,
+  updateUserById,
   deleteUserFromDB,
 }

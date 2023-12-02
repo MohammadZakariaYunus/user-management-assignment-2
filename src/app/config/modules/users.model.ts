@@ -86,6 +86,18 @@ userSchema.post('save', async function (doc, next) {
   doc.password = ''
   next()
 })
+userSchema.pre('find', function (next) {
+  this.find({ isDeleted: { $ne: true } })
+  next()
+})
+userSchema.pre('findOne', function (next) {
+  this.find({ isDeleted: { $ne: true } })
+  next()
+})
+userSchema.pre('aggregate', function (next) {
+  this.pipeline().unshift({ $match: { isDeleted: { $ne: true } } })
+  next()
+})
 
 userSchema.statics.isUserExists = async function (id: string) {
   const existingUser = await User.findOne({ id })
