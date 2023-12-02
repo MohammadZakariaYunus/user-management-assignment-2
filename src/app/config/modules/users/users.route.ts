@@ -15,6 +15,8 @@ router.put('/:userId/orders', userControllers.addOrderToUser)
 
 router.get('/:userId/orders', userControllers.getSingleUserOrders)
 
+router.get('/:userId/orders/total-price', userControllers.calculateUserOrders)
+
 router.delete('/:userId', userControllers.deleteUserFromDB)
 
 export const UsersRoutes = router

@@ -2,11 +2,12 @@ import { Request, Response } from 'express'
 import { UserServices } from './users.service'
 import userValidationSchema from '../users.validation'
 
+// Creating a New User
+
 const createUser = async (req: Request, res: Response) => {
   try {
     const { users: usersData } = req.body
     const { error, value } = userValidationSchema.validate(usersData)
-
     if (error) {
       return res.status(400).json({
         success: false,
@@ -14,7 +15,6 @@ const createUser = async (req: Request, res: Response) => {
         errors: error.details,
       })
     }
-
     const result = await UserServices.createUserIntoDB(value)
     if (result) {
       const updatedUserData = {
@@ -51,49 +51,15 @@ const createUser = async (req: Request, res: Response) => {
   }
 }
 
+// Getting a All User
+
 const getAllUsers = async (req: Request, res: Response) => {
   try {
     const result = await UserServices.getAllUsersFromDB()
 
-    const filteredResult = result.map(user => ({
-      username: user.username,
-      fullName: {
-        firstName: user.fullName.firstName,
-        lastName: user.fullName.lastName,
-      },
-      age: user.age,
-      email: user.email,
-      address: {
-        street: user.address.street,
-        city: user.address.city,
-        country: user.address.country,
-      },
-    }))
-
     res.status(200).json({
       success: true,
       message: 'Users fetched successfully!',
-      data: filteredResult,
-    })
-  } catch (err) {
-    res.status(404).json({
-      success: false,
-      message: 'User not found',
-      error: {
-        code: 404,
-        description: 'User not found!',
-      },
-    })
-  }
-}
-
-const getUserById = async (req: Request, res: Response) => {
-  try {
-    const { userId } = req.params
-    const result = await UserServices.getUserByIdFromDB(userId)
-    res.status(200).json({
-      success: true,
-      message: 'User is retrieved successfully',
       data: result,
     })
   } catch (err) {
@@ -108,12 +74,36 @@ const getUserById = async (req: Request, res: Response) => {
   }
 }
 
+// Get Single User
+
+const getUserById = async (req: Request, res: Response) => {
+  try {
+    const { userId } = req.params
+    const result = await UserServices.getUserByIdFromDB(userId)
+    res.status(200).json({
+      success: true,
+      message: 'User fetched successfully!',
+      data: result,
+    })
+  } catch (err) {
+    res.status(404).json({
+      success: false,
+      message: 'User not found',
+      error: {
+        code: 404,
+        description: 'User not found!',
+      },
+    })
+  }
+}
+
+// Updating User
+
 const updateUserById = async (req: Request, res: Response) => {
   try {
     const { userId } = req.params
     const userData = req.body
     const result = await UserServices.updateUserFromDB(userId, userData)
-
     if (result) {
       const updatedUserData = {
         username: result.username,
@@ -148,16 +138,14 @@ const updateUserById = async (req: Request, res: Response) => {
     })
   }
 }
+
+// Adding Orders
+
 const addOrderToUser = async (req: Request, res: Response) => {
   try {
     const { userId } = req.params
-    const orderData = req.body
     const userData = req.body
-    const result = await UserServices.addOrderToUser(
-      userId,
-      userData,
-      orderData,
-    )
+    const result = await UserServices.addOrderToUser(userId, userData)
 
     if (result) {
       const updatedUserData = {
@@ -173,9 +161,8 @@ const addOrderToUser = async (req: Request, res: Response) => {
           city: result.address.city,
           country: result.address.country,
         },
-        orders: result.orders, // Include the updated orders in the response
+        orders: result.orders,
       }
-
       res.status(200).json({
         status: 'success',
         message: 'Order added to user successfully',
@@ -195,6 +182,8 @@ const addOrderToUser = async (req: Request, res: Response) => {
     })
   }
 }
+
+// Getting a single User Orders
 
 const getSingleUserOrders = async (req: Request, res: Response) => {
   try {
@@ -216,6 +205,56 @@ const getSingleUserOrders = async (req: Request, res: Response) => {
     })
   }
 }
+
+// Calculate User total order Price
+
+const calculateUserOrders = async (req: Request, res: Response) => {
+  try {
+    const { userId } = req.params
+    const result = await UserServices.calculateTotalPriceByUserId(userId)
+
+    if (result.success) {
+      if (result.data) {
+        res.status(200).json({
+          success: true,
+          message: 'Total price calculated successfully!',
+          data: {
+            totalPrice: result.data.totalPrice,
+          },
+        })
+      } else {
+        res.status(500).json({
+          success: false,
+          message: 'Internal Server Error',
+          error: {
+            code: 500,
+            description: 'Data not available in the response!',
+          },
+        })
+      }
+    } else {
+      res.status(404).json({
+        success: false,
+        message: 'User not found',
+        error: {
+          code: 404,
+          description: 'User not found!',
+        },
+      })
+    }
+  } catch (err) {
+    res.status(500).json({
+      success: false,
+      message: 'Internal Server Error',
+      error: {
+        code: 500,
+        description: 'Something went wrong!',
+      },
+    })
+  }
+}
+
+// Deleting a User
 
 const deleteUserFromDB = async (req: Request, res: Response) => {
   try {
@@ -245,5 +284,6 @@ export const userControllers = {
   updateUserById,
   addOrderToUser,
   getSingleUserOrders,
+  calculateUserOrders,
   deleteUserFromDB,
 }

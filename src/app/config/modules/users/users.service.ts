@@ -5,17 +5,66 @@ const createUserIntoDB = async (userData: TUser) => {
   if (await User.isUserExists(userData.userId)) {
     throw new Error('User already exists!')
   }
-
   const result = await User.create(userData)
   return result
 }
+
 const getAllUsersFromDB = async () => {
-  const result = await User.find()
-  return result
+  try {
+    const result = await User.aggregate([
+      {
+        $project: {
+          _id: 0,
+          userId: 1,
+          username: 1,
+          fullName: 1,
+          age: 1,
+          email: 1,
+          address: 1,
+        },
+      },
+    ])
+
+    if (result.length === 0) {
+      throw {
+        code: 404,
+        description: 'User not found!',
+      }
+    }
+
+    return {
+      success: true,
+      data: result,
+    }
+  } catch (error: any) {
+    return {
+      success: false,
+      message: 'User not found',
+      error: {
+        code: error.code || 500, // Default to 500 if no code is provided
+        description: error.description || 'Internal Server Error',
+      },
+    }
+  }
 }
 
 const getUserByIdFromDB = async (userId: string) => {
-  const result = await User.aggregate([{ $match: { userId: userId } }])
+  const result = await User.aggregate([
+    { $match: { userId: userId } },
+    {
+      $project: {
+        _id: 0,
+        userId: 1,
+        username: 1,
+        fullName: 1,
+        age: 1,
+        email: 1,
+        isActive: 1,
+        hobbies: 1,
+        address: 1,
+      },
+    },
+  ])
   return result
 }
 
@@ -27,38 +76,26 @@ const updateUserFromDB = async (
     new: true,
     runValidators: true,
   })
-
   return result
 }
 
 const addOrderToUser = async (
   userId: string,
-  userData: TUser,
   orderData: TOrder | null = null,
 ): Promise<TUser | null> => {
-  try {
-    const user = await User.findOneAndUpdate({ userId }, userData, {
-      new: true,
-      runValidators: true,
-    })
-    if (!user) {
-      return null
-    }
-    if (orderData) {
-      user.orders.push(orderData)
-    }
-    const updatedUser = await user.save()
-    return updatedUser.toObject()
-  } catch (error) {
-    throw new Error('Error updating user in the database')
-  }
+  const result = await User.findOneAndUpdate(
+    { userId },
+    { $push: { orders: orderData } },
+    { new: true, runValidators: true },
+  )
+  return result?.toObject() || null
 }
 
 const getOrdersByUserId = async (userId: string) => {
   try {
     const result = await User.aggregate([
       { $match: { userId: userId } },
-      { $unwind: '$orders' }, // Unwind the orders array
+      { $unwind: '$orders' },
       {
         $project: {
           _id: 0,
@@ -67,17 +104,53 @@ const getOrdersByUserId = async (userId: string) => {
         },
       },
     ])
-
     if (result.length === 0) {
-      return null // No user or orders found
+      return null
     }
-
-    // Extract the orders array from the result
     const orders = result.map((item: any) => item.orders)
-
     return orders
-  } catch (error) {
-    throw new Error('Error retrieving orders from the database')
+  } catch (err) {
+    return {
+      success: false,
+      message: 'User not found',
+      error: {
+        code: 404,
+        description: 'User not found!',
+      },
+    }
+  }
+}
+
+const calculateTotalPriceByUserId = async (userId: string) => {
+  try {
+    const orders = await UserServices.getOrdersByUserId(userId)
+
+    if (!orders) {
+      throw new Error('User not found')
+    }
+    let totalPrice = 0
+    for (const order of orders) {
+      const orderPrice = parseFloat(order.price)
+      if (!isNaN(orderPrice)) {
+        totalPrice += orderPrice
+      }
+    }
+    return {
+      success: true,
+      message: 'Total price calculated successfully!',
+      data: {
+        totalPrice,
+      },
+    }
+  } catch (err) {
+    return {
+      success: false,
+      message: 'User not found',
+      error: {
+        code: 404,
+        description: 'User not found!',
+      },
+    }
   }
 }
 
@@ -93,5 +166,6 @@ export const UserServices = {
   updateUserFromDB,
   addOrderToUser,
   getOrdersByUserId,
+  calculateTotalPriceByUserId,
   deleteUserFromDB,
 }
