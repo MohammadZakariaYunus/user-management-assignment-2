@@ -123,7 +123,8 @@ const getOrdersByUserId = async (userId: string) => {
 
 const calculateTotalPriceByUserId = async (userId: string) => {
   try {
-    const orders = await UserServices.getOrdersByUserId(userId)
+    const ordersResult = await UserServices.getOrdersByUserId(userId)
+    const orders = ordersResult as any[]
 
     if (!orders) {
       throw new Error('User not found')
