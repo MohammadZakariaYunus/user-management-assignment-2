@@ -12,7 +12,7 @@ const createUser = async (req: Request, res: Response) => {
       return res.status(400).json({
         success: false,
         message: 'Validation error',
-        errors: error.details,
+        errors: error,
       })
     }
     const result = await UserServices.createUserIntoDB(value)
@@ -201,9 +201,10 @@ const getSingleUserOrders = async (req: Request, res: Response) => {
   try {
     const { userId } = req.params
     const result = await UserServices.getOrdersByUserId(userId)
+
     res.status(200).json({
       success: true,
-      message: 'User is retrieved successfully',
+      message: 'Order fetched successfully!',
       data: result,
     })
   } catch (err) {

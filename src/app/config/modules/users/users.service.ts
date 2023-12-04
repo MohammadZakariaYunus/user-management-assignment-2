@@ -65,7 +65,11 @@ const getUserByIdFromDB = async (userId: string) => {
       },
     },
   ])
-  return result
+  if (result.length === 0) {
+    return 'User not available'
+  } else {
+    return result
+  }
 }
 
 const updateUserFromDB = async (
@@ -105,7 +109,7 @@ const getOrdersByUserId = async (userId: string) => {
       },
     ])
     if (result.length === 0) {
-      return null
+      return 'User not available'
     }
     const orders = result.map((item: any) => item.orders)
     return orders
@@ -132,8 +136,10 @@ const calculateTotalPriceByUserId = async (userId: string) => {
     let totalPrice = 0
     for (const order of orders) {
       const orderPrice = parseFloat(order.price)
-      if (!isNaN(orderPrice)) {
-        totalPrice += orderPrice
+      const orderQuantity = parseInt(order.quantity)
+
+      if (!isNaN(orderPrice) && !isNaN(orderQuantity)) {
+        totalPrice += orderPrice * orderQuantity
       }
     }
     return {
